@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 依赖注入 给service注入dao -->
+	<bean id="studentService" class="com.one.service.impl.StudentServiceImpl">
+		<property name="studentMapper" ref="studentMapper"></property><!-- set方式注入 -->
+	</bean>
+	<!-- 给controller注入service -->
+	<!-- <bean id="" class="com.one.controller.StudentController">
+		<property name="studentService" ref="studentService"></property>
+	</bean> -->
+	
+	
+	
+	<!-- spring整合mybatis的核心：   将mybatis的SqlSessionFactory交给spring -->
+	<!-- 数据源     mapper.xml -->
+	
+	<!-- 动态引入数据库配置信息 -->
+	<bean id="config" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+		<property name="locations">
+			<array>
+				<value>classpath:db.properties</value>
+			</array>
+		</property>
+	</bean>
+	
+	<!-- 配置数据库相关信息（替代mybatis的配置文件conf.xml） -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driver}"></property>
+		<property name="url" value="${url}"></property>
+		<property name="username" value="${username}"></property>
+		<property name="password" value="${password}"></property>
+		<property name="maxActive" value="${maxActive}"></property>
+		<property name="maxIdle" value="${maxIdle}"></property>
+	</bean>
+	
+	<!-- 配置mybatis需要的核心类：SqlSeesionFactory -->
+	<!-- 在springIOC容器中 创建mybatis的核心类SqlSeesionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 加载mapper.xml路径 -->
+		<property name="mapperLocations" value="classpath:com/one/mapper/*.xml"></property>
+	</bean>
+	
+	<!-- 将mybatis的SqlSeesionFactory 交给spring -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		<!-- 将com.one.mapper包中，所有的接口 产生与之对应的 动态代理对象（对象名就是首字母小写的接口名） -->
+		<property name="basePackage" value="com.one.mapper"></property>
+	</bean>
+	
+	
+	
+</beans>
