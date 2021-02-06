@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+
+	<!-- 扫描有注解的包 -->
+	<context:component-scan base-package="com.one.handler"></context:component-scan>
+	
+	<!-- 配置视图解析器(InternalResourceViewResolver) -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+	<!-- 加载国际化资源文件      ResourceBundleMessageSource会在springmvc响应程序时   介入（解析国际化资源文件） -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="i18n"></property>
+	</bean>
+	<!-- view-name会被视图解析器加上前缀后缀  -->
+	<mvc:view-controller path="testMvcViewController" view-name="success"/>
+	
+	<!-- 此配置是springmvc的基础配置，很多功能都需要通过该注解来协调 -->
+	<mvc:annotation-driven></mvc:annotation-driven>
+	
+	<!-- 该配置会让springmvc 接收一个请求，并且该请求没有对应的@Requestmapping时 ， 将该请求交给服务器默认的servlet区处理（直接访问） -->
+	<mvc:default-servlet-handler/>
+	
+	
+	<!--  自定义类型转换器      1.将自定义转换器纳入springIOC容器 -->
+	<bean id="MyConverter" class="com.one.converter.MyConverter"></bean>
+	<!-- 2.将MyConverter再纳入springmvc提供的转换器Bean -->
+	<!-- <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+		<property name="converters">
+			<set>
+				<ref bean="MyConverter"/>
+			</set>
+		</property>
+	</bean> -->
+	<!-- 3.将conersionService注册到annotation-driven中 -->
+	<!-- <mvc:annotation-driven conversion-service="conversionService"></mvc:annotation-driven> -->
+	
+	
+	<!-- 配置 数据格式化 注解 所需要的Bean -->
+	<bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+		<property name="converters">
+			<set>
+				<ref bean="MyConverter"/>
+			</set>
+		</property>
+	</bean>
+	<mvc:annotation-driven conversion-service="conversionService"></mvc:annotation-driven>
+	
+	<!-- 文件上传 -->
+	<!-- 配置CommonsMultipartResolver，用于实现文件上传，将其加入springIOC容器 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<!-- 上传单个文件的最大值   单位是Byte -->
+		<property name="maxUploadSize" value="-1"></property>
+	</bean>
+	
+	<!-- 拦截器 -->
+	<!-- 将自己写的拦截器配置到springmvc中       默认拦截全部请求 -->
+	<mvc:interceptors>
+		<!-- 配置具体的拦截路径 -->
+		<mvc:interceptor>
+			<!-- 指定拦截的路径，基于ant风格 -->
+			<mvc:mapping path="/testInterceptor"/>
+			<!-- 指定不拦截的路径 -->
+			<mvc:exclude-mapping path="/**"/>
+			<bean class="com.one.imterceptor.MyInterceptor"></bean>
+		</mvc:interceptor>
+		
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<mvc:exclude-mapping path="/testInterceptor"/>
+			<bean class="com.one.imterceptor.MyInterceptor2"></bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<!-- SimpleMappingExceptionResolver 以配置的方式处理异常 -->
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<!-- 如果发生异常，异常对象会被保存在exceptionAttributr的value值中，并且会放入request域中；异常变量的值是exception -->
+		<property name="exceptionAttribute" value="e"></property>
+		<property name="exceptionMappings">
+			<props>
+				<!-- 相当于catch(Exception e){跳转页面} -->
+				<prop key="java.lang.ArithmeticException">error</prop>
+			</props>
+		</property>
+	</bean>
+	
+	
+</beans>
