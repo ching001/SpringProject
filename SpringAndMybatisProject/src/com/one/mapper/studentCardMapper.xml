@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <!-- namespace: 该mapper.xml映射文件的唯一标识 -->
+<mapper namespace="com.one.mapper.StudentCardMapper">
+
+	<select id="queryStudentCardById" parameterType="int" resultType="studentCard">
+		select * from studentCard where cardid = #{cardid}
+	</select>
+	
+</mapper>

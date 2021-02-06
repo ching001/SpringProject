@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace: 该mapper.xml映射文件的唯一标识 -->
+<mapper namespace="com.one.mapper.StudentMapper">
+
+	<!-- 将多个元素值  放入对象数组中  sql片段 -->
+	<sql id="ObjectArray">
+		<where><!-- where会处理第一个if标签中中的and  但不会处理之后if标签中中的and -->
+			<if test="array != null and array.length > 0">
+				<foreach collection="array" open=" and id in (" close=")" item="student" separator=",">
+				#{student.id}
+				</foreach>
+			</if>
+		</where>
+	</sql>
+
+<!-- 一、基础方式的增删改查CRUD -->
+
+	<select id="queryStudentById" resultType="student" parameterType="int">
+		select * from student where id = #{id}
+	</select>
+	
+	<!-- 查询   使用转换器 -->
+	<select id="queryStudentByIdWithConverter" resultMap="studentResult">
+		select * from student where id = #{id}
+	</select>
+	<resultMap type="student" id="studentResult">
+		<!-- 分为   主键id 和 非主键result -->
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="age" column="age"/>
+		<result property="sex" column="sex" javaType="boolean" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<!-- 通过调用[存储过程]实现查询 -->
+	<select id="queryCountByAgeWithProcedure" statementType="CALLABLE" parameterType="HashMap">
+		<!-- {
+			CALL queryCountByNameProcedure(
+				#{name,jdbcType=VARCHAR,mode=in},
+				#{scount,jdbcType=INTEGER,mode=OUT}
+			)
+		} -->
+		{
+			CALL queryCountByAgeWithProcedure(
+			    #{age,jdbcType=VARCHAR,mode=IN},
+			    #{scount,jdbcType=INTEGER,mode=OUT}
+			)
+		}
+	</select>
+	
+	<!-- resultType+HashMap -->
+	<select id="queryStudentByIdWithHashMap" parameterType="int" resultType="HashMap">
+		<!-- select 表的字段名 "类的属性名" from ...  来制定字段名和属性名的对应关系 -->
+		select id "id",name "name" from student
+	</select>
+	
+	<!-- 动态SQL标签 -->
+	<!-- <select id="queryStuByNameOrAgeWithSQLTag" resultType="student" parameterType="student">
+		select id,name,age from student where 1=1
+			<if test="name != null and name != ''">
+				and name = #{name}
+			</if>
+			<if test="age != null and age != ''">
+				and age = #{age}
+			</if>
+	</select> -->
+	<select id="queryStuByNameOrAgeWithSQLTag" resultType="student" parameterType="student">
+		select id,name,age from student
+		<where><!-- where会处理第一个if标签中中的and  但不会处理之后if标签中中的and -->
+			<if test="name != null and name != ''">
+				and name = #{name}
+			</if>
+			<if test="age != null and age != ''">
+				and age = #{age}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 将多个元素值  放入对象的属性中 -->
+	<select id="queryStudentsWithIdInGrade" resultType="student" parameterType="grade">
+		select * from student
+		<where><!-- where会处理第一个if标签中中的and  但不会处理之后if标签中中的and -->
+			<if test="stuIds != null and stuIds.size > 0">
+				<foreach collection="stuIds" open=" and id in (" close=")" item="stuId" separator=",">
+				#{stuId}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	
+	<!-- 将多个元素值  放入数组中  int[] -->
+	<select id="queryStudentsWithArray" resultType="student" parameterType="int[]">
+		select * from student
+		<where><!-- where会处理第一个if标签中中的and  但不会处理之后if标签中中的and -->
+			<if test="array != null and array.length > 0">
+				<foreach collection="array" open=" and id in (" close=")" item="stuId" separator=",">
+				#{stuId}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	<!-- 将多个元素值  放入数组中  List<Integer> -->
+	<select id="queryStudentsWithList" resultType="student" parameterType="list">
+		select * from student
+		<where><!-- where会处理第一个if标签中中的and  但不会处理之后if标签中中的and -->
+			<if test="list != null and list.size > 0">
+				<foreach collection="list" open=" and id in (" close=")" item="stuId" separator=",">
+				#{stuId}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	<!-- 将多个元素值  放入对象数组中  Student[] -->
+	<select id="queryStudentsWithObjectArray" resultType="student" parameterType="object[]">
+		select * from student
+		<include refid="ObjectArray"></include>
+	</select>
+	
+	<!-- 利用业务扩展类实现 一对一查询  -->
+	<select id="queryStudentByIdWithOTO" parameterType="int" resultType="studentbusiness">
+		select s.*,c.* from student s inner join studentcard c on s.cardid=c.cardid where s.id = #{id}
+	</select>
+	<!-- 利用resultMap实现 一对一查询  -->
+	<select id="queryStudentByIdWithOTO2" parameterType="int" resultMap="stu_card_map">
+		select s.*,c.* from student s inner join studentcard c on s.cardid=c.cardid where s.id = #{id}
+	</select>
+	<resultMap type="student" id="stu_card_map"> 
+		<!-- 学生的信息 -->
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="age" column="age"/>
+		<result property="sex" column="sex" javaType="boolean" jdbcType="INTEGER"/>
+		<!-- 一对一时 使用association映射；javaType指定该属性的了类型   -->
+		<!-- 一对多时 使用 collection映射-->
+		<association property="card" javaType="StudentCard">
+			<id property="cardid" column="cardid"/>
+			<result property="cardinfo" column="cardinfo"/>
+		</association>
+	</resultMap>
+	
+	<!-- 一对多 -->
+	<select id="queryClassAndStudents" parameterType="int" resultMap="class_student_map">
+		<!-- 查询g1的班级信息  和g1班的所有学生信息 -->
+		select s.*,c.* from student s inner join studentclass c 
+		on s.classid = c.classid
+		where c.classid = #{classid}
+	</select>
+	<resultMap type="studentclass" id="class_student_map">
+		<!-- 因为type的主类是班级   因此先配置班级的信息 -->
+		<id property="classId" column="classid"/>
+		<result property="className" column="classname"/>
+		<!-- 配置成员属性 学生  一对多；javaType：属性类型，ofType：属性的元素类型 -->
+		<collection property="students" ofType="student">
+			<id property="id" column="id"/>
+			<result property="name" column="name"/>
+			<result property="age" column="age"/>
+			<result property="sex" column="sex" javaType="boolean" jdbcType="INTEGER"/>
+		</collection>
+	</resultMap>
+	
+	
+	
+	<!-- 利用resultMap实现 一对一查询     延迟加载  -->
+	<select id="queryStudentWithOTO2Lazyload" resultMap="stu_card_lazy_map">
+		select * from student 
+	</select>
+	<resultMap type="student" id="stu_card_lazy_map"> 
+		<!-- 学生的信息 -->
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="age" column="age"/>
+		<result property="sex" column="sex" javaType="boolean" jdbcType="INTEGER"/>
+		<!-- 一对一时 使用association映射；javaType指定该属性的了类型   -->
+		<!-- 一对多时 使用 collection映射-->
+		<association property="card" javaType="StudentCard" select="com.one.mapper.StudentCardMapper.queryStudentCardById" column="cardid">
+			<!-- <id property="cardid" column="cardid"/>
+			<result property="cardinfo" column="cardinfo"/> -->
+		</association>
+	</resultMap>
+	
+	<!-- 一对多     延迟加载 -->
+	<select id="queryAllClassAndStudents" resultMap="class_student_lazyload_map">
+		<!-- 查询g1的班级信息  和g1班的所有学生信息 -->
+		select c.* from studentClass c
+	</select>
+	<resultMap type="studentclass" id="class_student_lazyload_map">
+		<!-- 因为type的主类是班级   因此先配置班级的信息 -->
+		<id property="classId" column="classid"/>
+		<result property="className" column="classname"/>
+		<!-- 配置成员属性 学生  一对多；javaType：属性类型，ofType：属性的元素类型 -->
+		<collection property="students" ofType="student" select="com.one.mapper.StudentClassMapper.queryStudentById" column="classid">
+			<!-- <id property="id" column="id"/>
+			<result property="name" column="name"/>
+			<result property="age" column="age"/>
+			<result property="sex" column="sex" javaType="boolean" jdbcType="INTEGER"/> -->
+		</collection>
+	</resultMap>
+	
+	
+	
+	
+	<insert id="addStudent" parameterType="student">
+		insert into student(id,name,age) values(#{id},#{name},#{age})
+	</insert>
+	
+	<update id="updateStudentById" parameterType="student">
+		update student set name=#{name},age=#{age} where id=#{id}
+	</update>
+	
+	<delete id="delStudentById" parameterType="int">
+		delete from student where id=#{id}
+	</delete>
+	
+	<select id="queryAllStudent" resultType="student">
+		select * from student
+	</select>
+	
+</mapper>

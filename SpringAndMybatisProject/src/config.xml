@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-config.dtd">
+ 
+ 	
+<configuration>
+
+	<!-- 动态引入数据库配置信息 -->
+	<properties resource="db.properties"></properties>
+	
+	<settings>
+		<!-- 开启日志  并指定使用的具体日志 -->
+		<setting name="logImpl" value="LOG4J"/>
+		<!-- 开启延迟加载  -->
+		<setting name="lazyLoadingEnabled" value="true"/>
+		<!-- 关闭立即加载      aggressiveLazyLoading  -->
+		<setting name="aggressiveLazyLoading" value="false"/>
+		
+	</settings>
+	
+	<!-- 设置单个/多个别名 -->
+	<typeAliases>
+		<!-- 单个别名（别名 忽略大小写） -->
+		<!-- <typeAlias type="com.one.entity.Student" alias="student"/> -->
+		
+		<!-- 批量定义别名  会将该包中的所有类批量定义别名 -->
+		<package name="com.one.entity"/>
+	</typeAliases>
+	
+	<typeHandlers>
+		<typeHandler handler="com.one.converter.BooleanAndIntConverter" javaType="boolean" jdbcType="INTEGER"/>
+	</typeHandlers>
+	
+	<!-- 数据库信息 -->
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<dataSource type="POOLED">
+				<property name="driver" value="${driver}" />
+				<property name="url" value="${url}" />
+				<property name="username" value="${username}" />
+				<property name="password" value="${password}" />
+			</dataSource>
+		</environment>
+	</environments>
+	<mappers>
+		<!-- 加载映射文件studentMapper.xml -->
+		<mapper resource="com/one/mapper/studentMapper.xml" />
+		<mapper resource="com/one/mapper/studentCardMapper.xml" />
+		<mapper resource="com/one/mapper/studentClassMapper.xml" />
+		
+	</mappers>
+</configuration>
